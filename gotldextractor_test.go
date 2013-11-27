@@ -20,7 +20,10 @@ func TestParseHosts(t *testing.T) {
 		t.Error("Error building tree!")
 	}
 	HOSTNAMES := []string{
-		"randomshuffle",
+		"meh.thisshouldwork.ck",
+		"meh.www.ck",
+		"www.guy.kawasaki.jp",
+		"www.city.kawasaki.jp",
 		"www.cnn.com",
 		"www.bbc.co.uk",
 		"www.sina.com.cn",

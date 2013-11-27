@@ -35,7 +35,9 @@ type TLDExtractorNode struct {
 		 .ac.co.uk
 		 .co.uk
 	*/
-	IsEnd bool
+	IsEnd       bool
+	HasAsterisk bool
+	HasNot      bool
 
 	Count int
 	Depth int
@@ -74,18 +76,25 @@ func (tldextractor *TLDExtractor) AddTLD(tld string) {
 		return
 	}
 	//fmt.Println("Adding: ", tld)
-	// strips prefix * from tld
-	use_tld := strings.TrimLeft(tld, "*!")
+	use_tld := tld
 	// if tld does not begin with a ".", we prepend it
-	if string(use_tld[0]) != "." {
+	if !strings.HasPrefix(use_tld, "!") && !strings.HasPrefix(use_tld, "*") && !strings.HasPrefix(use_tld, ".") {
 		use_tld = "." + use_tld
 	}
 	current_node := tldextractor.RootNode
 	for i := 0; i < len(use_tld); i++ {
 		// tld[len(use_tld)-1-i] is the effective character
 		found := false
+		current_char := string(use_tld[len(use_tld)-1-i])
+		if current_char == "*" {
+			current_node.HasAsterisk = true
+			continue
+		} else if current_char == "!" {
+			current_node.HasNot = true
+			continue
+		}
 		for _, n := range current_node.ChildNodes {
-			if n.Character == string(use_tld[len(use_tld)-1-i]) {
+			if n.Character == current_char {
 				found = true
 				current_node = n
 			}
@@ -97,7 +106,7 @@ func (tldextractor *TLDExtractor) AddTLD(tld string) {
 		if !found {
 			//fmt.Println(strings.Repeat(" ", current_node.Depth+1), "Creating a new node for ", string(use_tld[len(use_tld)-1-i]))
 			node := TLDExtractorNode{}
-			node.Character = string(use_tld[len(use_tld)-1-i])
+			node.Character = current_char
 			node.Count = 1
 			node.Depth = current_node.Depth + 1
 			current_node.ChildNodes = append(current_node.ChildNodes, &node)
@@ -131,8 +140,10 @@ func (tldextractor *TLDExtractor) ParseURL(url *url.URL) (TLDResult, error) {
 }
 
 func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
+	//fmt.Println(host)
 	current_node := tldextractor.RootNode
-	lastIsEnd := -1
+	lastIsEnd, lastDot := -1, -1
+	hasAsterisk, hasNot := false, false
 	for i := 0; i < len(host); i++ {
 		// host[len(host)-1-i] is the effective character
 		found := false
@@ -144,6 +155,15 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 			if current_node.IsEnd && current_node.Character == "." {
 				lastIsEnd = len(host) - 1 - i
 			}
+			if current_node.Character == "." {
+				lastDot = len(host) - 1 - i
+			}
+			if current_node.HasAsterisk {
+				hasAsterisk = true
+			}
+			if current_node.HasNot {
+				hasNot = true
+			}
 			if found {
 				break
 			}
@@ -152,8 +172,23 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 			break
 		}
 	}
-	if lastIsEnd == -1 {
+	if lastIsEnd == -1 && !hasAsterisk && !hasNot {
 		return TLDResult{"", "", host}, nil
+	}
+	if hasAsterisk {
+		// if hasAsterisk, we can set lastIsEnd to the next (lower index) dot after lastDot
+		hasAsterisk_index := strings.LastIndex(host[0:lastDot], ".")
+		//fmt.Println("INSIDE hasAsterisk hasAsterisk_index:", hasAsterisk_index, " lastDot:", lastDot, " lastIsEnd:", lastIsEnd)
+		if hasAsterisk_index == -1 {
+			lastIsEnd = lastDot
+		} else {
+			lastIsEnd = hasAsterisk_index
+		}
+	}
+	if hasNot {
+		// if hasNot, we can set lastIsEnd to lastDot
+		//fmt.Println("INSIDE hasNot lastDot:", lastDot, " lastIsEnd:", lastIsEnd)
+		lastIsEnd = lastDot
 	}
 	tld := strings.TrimLeft(host[lastIsEnd+1:], ".")
 	subdomain_domain := strings.TrimRight(host[0:lastIsEnd+1], ".")
