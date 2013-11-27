@@ -11,7 +11,7 @@ The TLDExtractor reads from a datafile, taken from http://mxr.mozilla.org/mozill
 E.g. if the rule is "!city.kawasaki.jp", it is added to the trie as
   p -> j -> . -> i -> -> k -> a -> s -> a -> w -> a -> k -> . -> y -> t -> i -> c(!)
 
-After the trie is generated, when a search is performed, the Parse function walks the trie structure and generates the TLDResult.
+After the trie is generated, when a search is performed, the Parse function reverses the hostname, walks the trie structure and generates the TLDResult.
 
 E.g.
    r, err := tldextract.ParseHost("www.guy.kawasaki.jp")
