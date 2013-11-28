@@ -3,6 +3,7 @@ package gotldextractor
 import (
 	"bufio"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	_ "strconv"
@@ -141,22 +142,27 @@ func (tldextractor *TLDExtractor) ParseURL(url *url.URL) (TLDResult, error) {
 
 func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 	//fmt.Println(host)
+	// we remove port information from the tld if it is present i.e. www.facebook.com:443
+	use_host := host
+	if strings.Contains(host, ":") {
+		use_host, _, _ = net.SplitHostPort(host)
+	}
 	current_node := tldextractor.RootNode
 	lastIsEnd, lastDot := -1, -1
 	hasAsterisk, hasNot := false, false
-	for i := 0; i < len(host); i++ {
-		// host[len(host)-1-i] is the effective character
+	for i := 0; i < len(use_host); i++ {
+		// use_host[len(use_host)-1-i] is the effective character
 		found := false
 		for _, n := range current_node.ChildNodes {
-			if n.Character == string(host[len(host)-1-i]) {
+			if n.Character == string(use_host[len(use_host)-1-i]) {
 				found = true
 				current_node = n
 			}
 			if current_node.IsEnd && current_node.Character == "." {
-				lastIsEnd = len(host) - 1 - i
+				lastIsEnd = len(use_host) - 1 - i
 			}
 			if current_node.Character == "." {
-				lastDot = len(host) - 1 - i
+				lastDot = len(use_host) - 1 - i
 			}
 			if current_node.HasAsterisk {
 				hasAsterisk = true
@@ -173,11 +179,11 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 		}
 	}
 	if lastIsEnd == -1 && !hasAsterisk && !hasNot {
-		return TLDResult{"", "", host}, nil
+		return TLDResult{"", "", use_host}, nil
 	}
 	if hasAsterisk {
 		// if hasAsterisk, we can set lastIsEnd to the next (lower index) dot after lastDot
-		hasAsterisk_index := strings.LastIndex(host[0:lastDot], ".")
+		hasAsterisk_index := strings.LastIndex(use_host[0:lastDot], ".")
 		//fmt.Println("INSIDE hasAsterisk hasAsterisk_index:", hasAsterisk_index, " lastDot:", lastDot, " lastIsEnd:", lastIsEnd)
 		if hasAsterisk_index == -1 {
 			lastIsEnd = lastDot
@@ -190,8 +196,8 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 		//fmt.Println("INSIDE hasNot lastDot:", lastDot, " lastIsEnd:", lastIsEnd)
 		lastIsEnd = lastDot
 	}
-	tld := strings.TrimLeft(host[lastIsEnd+1:], ".")
-	subdomain_domain := strings.TrimRight(host[0:lastIsEnd+1], ".")
+	tld := strings.TrimLeft(use_host[lastIsEnd+1:], ".")
+	subdomain_domain := strings.TrimRight(use_host[0:lastIsEnd+1], ".")
 	domain_index := strings.LastIndex(subdomain_domain, ".")
 	subdomain, domain := "", ""
 	if domain_index == -1 {

@@ -29,7 +29,9 @@ func TestParseHosts(t *testing.T) {
 		"www.sina.com.cn",
 		"weibo.sina.com.cn",
 		"news.ycombinator.com",
-		"www.github.com"}
+		"www.github.com",
+		"www.github.com:443",
+		"www.facebook.com:8080"}
 	for _, hostname := range HOSTNAMES {
 		r, err := tldextract.ParseHost(hostname)
 		fmt.Println(r)
