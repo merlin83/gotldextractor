@@ -14,12 +14,12 @@ E.g. if the rule is "!city.kawasaki.jp", it is added to the trie as
 
 After the trie is generated, when a search is performed, the Parse function reverses the hostname, walks the trie structure and generates the TLDResult.
 
-E.g.
+# Example
 
    r, err := tldextract.ParseHost("www.guy.kawasaki.jp")
 
-   -> { www guy.kawasaki.jp} // based on the rule *.kawasaki.jp
+   -> r.Subdomain = "", r.Domain = "www", r.TLD = "guy.kawasaki.jp" // based on the rule *.kawasaki.jp
 
    r, err := tldextract.ParseHost("www.city.kawasaki.jp")
 
-   -> {www city kawasaki.jp} // based on the rule *.kawasaki.jp and !city.kawasaki.jp
+   -> r.Subdomain = "www", r.Domain = "city", r.TLD = "kawasaki.jp" // based on the rules *.kawasaki.jp and !city.kawasaki.jp
