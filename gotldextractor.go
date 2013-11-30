@@ -22,6 +22,10 @@ func (tldresult *TLDResult) GetHostname() string {
 	return tldresult.Subdomain + "." + tldresult.Domain + "." + tldresult.TLD
 }
 
+func (tldresult *TLDResult) GetDomainTLD() string {
+	return tldresult.Domain + "." + tldresult.TLD
+}
+
 type TLDExtractor struct {
 	RootNode *TLDExtractorNode
 }
