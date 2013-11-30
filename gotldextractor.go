@@ -21,6 +21,9 @@ type TLDResult struct {
 	Subdomain string
 	Domain    string
 	TLD       string
+
+	// rules that were used to match this TLDResult
+	Rules []string
 }
 
 func (tldresult *TLDResult) GetHostname() string {
@@ -51,6 +54,8 @@ type TLDExtractorNode struct {
 
 	Count int
 	Depth int
+
+	Rules []string // list of rules that end with current Node
 }
 
 func (tldextractor *TLDExtractor) Build() (bool, error) {
@@ -116,9 +121,13 @@ func (tldextractor *TLDExtractor) AddTLD(tld string) {
 		current_char := string(use_tld[len(use_tld)-1-i])
 		if current_char == "*" {
 			current_node.HasAsterisk = true
+			current_node.IsEnd = true
+			current_node.Rules = append(current_node.Rules, tld)
 			continue
 		} else if current_char == "!" {
 			current_node.HasNot = true
+			current_node.IsEnd = true
+			current_node.Rules = append(current_node.Rules, tld)
 			continue
 		}
 		for _, n := range current_node.ChildNodes {
@@ -142,6 +151,7 @@ func (tldextractor *TLDExtractor) AddTLD(tld string) {
 		}
 		if i == len(use_tld)-1 {
 			current_node.IsEnd = true
+			current_node.Rules = append(current_node.Rules, tld)
 		}
 		//fmt.Println("use_tld: ", use_tld, " i:", i, " len(use_tld): ", len(use_tld), " current_node (char): ", current_node.Character, " Itoa: ", string(current_node.Character), " current_node (Depth): ", current_node.Depth, " current_node (Count): ", current_node.Count)
 	}
@@ -177,6 +187,8 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 	current_node := tldextractor.RootNode
 	lastIsEnd, lastDot := -1, -1
 	hasAsterisk, hasNot := false, false
+	var rules []string
+
 	for i := 0; i < len(use_host); i++ {
 		// use_host[len(use_host)-1-i] is the effective character
 		found := false
@@ -184,20 +196,23 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 			if n.Character == string(use_host[len(use_host)-1-i]) {
 				found = true
 				current_node = n
-			}
-			if current_node.IsEnd && current_node.Character == "." {
-				lastIsEnd = len(use_host) - 1 - i
-			}
-			if current_node.Character == "." {
-				lastDot = len(use_host) - 1 - i
-			}
-			if current_node.HasAsterisk {
-				hasAsterisk = true
-			}
-			if current_node.HasNot {
-				hasNot = true
+				if current_node.IsEnd {
+					lastIsEnd = len(use_host) - 1 - i
+				}
+				if current_node.Character == "." {
+					lastDot = len(use_host) - 1 - i
+				}
+				if current_node.HasAsterisk {
+					hasAsterisk = true
+				}
+				if current_node.HasNot {
+					hasNot = true
+				}
 			}
 			if found {
+				if len(current_node.Rules) > 0 {
+					rules = StringConcat(rules, current_node.Rules)
+				}
 				break
 			}
 		}
@@ -206,12 +221,18 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 		}
 	}
 	if lastIsEnd == -1 && !hasAsterisk && !hasNot {
-		return TLDResult{"", "", use_host}, nil
+		return TLDResult{"", "", use_host, []string{}}, nil
 	}
 	if hasAsterisk {
 		// if hasAsterisk, we can set lastIsEnd to the next (lower index) dot after lastDot
-		hasAsterisk_index := strings.LastIndex(use_host[0:lastDot], ".")
-		//fmt.Println("INSIDE hasAsterisk hasAsterisk_index:", hasAsterisk_index, " lastDot:", lastDot, " lastIsEnd:", lastIsEnd)
+		use_last_position := -1
+		if lastIsEnd > lastDot {
+			use_last_position = lastIsEnd
+		} else {
+			use_last_position = lastDot
+		}
+		hasAsterisk_index := strings.LastIndex(use_host[0:use_last_position], ".")
+		//fmt.Println(host, "INSIDE hasAsterisk use_host[0:use_last_position]: ", use_host[0:use_last_position], " hasAsterisk_index:", hasAsterisk_index, " lastDot:", lastDot, " lastIsEnd:", lastIsEnd, "rules:", rules)
 		if hasAsterisk_index == -1 {
 			lastIsEnd = lastDot
 		} else {
@@ -233,7 +254,15 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 		domain = subdomain_domain[domain_index+1:]
 		subdomain = subdomain_domain[:domain_index]
 	}
-	r := TLDResult{subdomain, domain, tld}
+	r := TLDResult{subdomain, domain, tld, rules}
 	//fmt.Println("Subdomain: ", subdomain, " Domain: ", domain, " TLD: ", tld, " subdomain_domain: ", subdomain_domain)
 	return r, nil
+}
+
+func StringConcat(old1, old2 []string) []string {
+	// taken from https://groups.google.com/forum/#!topic/golang-nuts/mRUD0KffSG4
+	newslice := make([]string, len(old1)+len(old2))
+	copy(newslice, old1)
+	copy(newslice[len(old1):], old2)
+	return newslice
 }

@@ -22,7 +22,7 @@ func TestFetchEffectiveTLDNames(t *testing.T) {
 }
 
 func invalidParseResult(t *testing.T, r *TLDResult) {
-	t.Error("invalid parse result for ", r.GetHostname(), " subdomain: ", r.Subdomain, " domain: ", r.Domain, " tld: ", r.TLD)
+	t.Error("invalid parse result for ", r.GetHostname(), " subdomain: ", r.Subdomain, " domain: ", r.Domain, " tld: ", r.TLD, " rules: ", r.Rules)
 }
 
 func TestParseHosts(t *testing.T) {
