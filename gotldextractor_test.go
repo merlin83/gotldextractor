@@ -9,7 +9,15 @@ func TestBuild(t *testing.T) {
 	tldextract := TLDExtractor{}
 	_, err := tldextract.Build()
 	if err != nil {
-		t.Error("Error building tree!")
+		t.Error("Error building tree! - ", err)
+	}
+}
+
+func TestFetchEffectiveTLDNames(t *testing.T) {
+	tldextract := TLDExtractor{}
+	_, err := tldextract.BuildFromURL("")
+	if err != nil {
+		t.Error("Error building tree! - ", err)
 	}
 }
 
@@ -17,7 +25,7 @@ func TestParseHosts(t *testing.T) {
 	tldextract := TLDExtractor{}
 	_, err := tldextract.Build()
 	if err != nil {
-		t.Error("Error building tree!")
+		t.Error("Error building tree! - ", err)
 	}
 	HOSTNAMES := []string{
 		"meh.thisshouldwork.ck",

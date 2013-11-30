@@ -4,10 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	_ "strconv"
 	"strings"
+)
+
+const (
+	MOZILLA_EFFECTIVE_TLD_NAMES_PATH = "http://mxr.mozilla.org/mozilla-central/source/netwerk/dns/effective_tld_names.dat?raw=1"
 )
 
 // TLDResult is the structure that stores the Subdomain, Domain, TLD makeup of a Hostname
@@ -61,14 +66,29 @@ func (tldextractor *TLDExtractor) BuildFromDataFile(path string) (bool, error) {
 	tldextractor.RootNode.Depth = 0
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		trimmed_text := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(trimmed_text, "//") {
-			continue
-		}
-		if len(trimmed_text) == 0 {
-			continue
-		}
-		tldextractor.AddTLD(trimmed_text)
+		tldextractor.AddTLD(scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (tldextractor *TLDExtractor) BuildFromURL(url string) (bool, error) {
+	use_url := strings.TrimSpace(url)
+	if len(use_url) == 0 {
+		use_url = MOZILLA_EFFECTIVE_TLD_NAMES_PATH
+	}
+	resp, err := http.Get(use_url)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+	tldextractor.RootNode = &TLDExtractorNode{}
+	tldextractor.RootNode.Depth = 0
+	scanner := bufio.NewScanner(resp.Body)
+	for scanner.Scan() {
+		tldextractor.AddTLD(scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
 		return false, err
@@ -77,11 +97,14 @@ func (tldextractor *TLDExtractor) BuildFromDataFile(path string) (bool, error) {
 }
 
 func (tldextractor *TLDExtractor) AddTLD(tld string) {
-	if len(tld) == 0 {
+	use_tld := strings.TrimSpace(tld)
+	if strings.HasPrefix(use_tld, "//") {
+		return
+	}
+	if len(use_tld) == 0 {
 		return
 	}
 	//fmt.Println("Adding: ", tld)
-	use_tld := tld
 	// if tld does not begin with a ".", we prepend it
 	if !strings.HasPrefix(use_tld, "!") && !strings.HasPrefix(use_tld, "*") && !strings.HasPrefix(use_tld, ".") {
 		use_tld = "." + use_tld
