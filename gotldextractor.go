@@ -19,7 +19,7 @@ type TLDResult struct {
 }
 
 func (tldresult *TLDResult) GetHostname() string {
-	return tldresult.Domain + "." + tldresult.Domain + "." + tldresult.TLD
+	return tldresult.Subdomain + "." + tldresult.Domain + "." + tldresult.TLD
 }
 
 type TLDExtractor struct {
