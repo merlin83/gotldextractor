@@ -27,10 +27,19 @@ type TLDResult struct {
 }
 
 func (tldresult *TLDResult) GetHostname() string {
+	if len(tldresult.Domain) == 0 {
+		return tldresult.TLD
+	}
+	if len(tldresult.Subdomain) == 0 {
+		return tldresult.Domain + "." + tldresult.TLD
+	}
 	return tldresult.Subdomain + "." + tldresult.Domain + "." + tldresult.TLD
 }
 
 func (tldresult *TLDResult) GetDomainTLD() string {
+	if len(tldresult.Domain) == 0 {
+		return tldresult.TLD
+	}
 	return tldresult.Domain + "." + tldresult.TLD
 }
 
@@ -244,8 +253,8 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 		//fmt.Println("INSIDE hasNot lastDot:", lastDot, " lastIsEnd:", lastIsEnd)
 		lastIsEnd = lastDot
 	}
-	tld := strings.TrimLeft(use_host[lastIsEnd+1:], ".")
-	subdomain_domain := strings.TrimRight(use_host[0:lastIsEnd+1], ".")
+	tld := strings.Trim(use_host[lastIsEnd+1:], ".")
+	subdomain_domain := strings.Trim(use_host[0:lastIsEnd+1], ".")
 	domain_index := strings.LastIndex(subdomain_domain, ".")
 	subdomain, domain := "", ""
 	if domain_index == -1 {
