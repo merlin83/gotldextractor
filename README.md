@@ -41,10 +41,10 @@ After the trie is generated, when a search is performed, the Parse function reve
 
 # Examples
 
-   r, err := tldextract.ParseHost("www.guy.kawasaki.jp")
+    r, err := tldextract.ParseHost("www.guy.kawasaki.jp")
 
-   -> r.Subdomain = "", r.Domain = "www", r.TLD = "guy.kawasaki.jp" // based on the rule *.kawasaki.jp
+    -> r.Subdomain = "", r.Domain = "www", r.TLD = "guy.kawasaki.jp" // based on the rule *.kawasaki.jp
 
-   r, err := tldextract.ParseHost("www.city.kawasaki.jp")
+    r, err := tldextract.ParseHost("www.city.kawasaki.jp")
 
-   -> r.Subdomain = "www", r.Domain = "city", r.TLD = "kawasaki.jp" // based on the rules *.kawasaki.jp and !city.kawasaki.jp
+    -> r.Subdomain = "www", r.Domain = "city", r.TLD = "kawasaki.jp" // based on the rules *.kawasaki.jp and !city.kawasaki.jp
