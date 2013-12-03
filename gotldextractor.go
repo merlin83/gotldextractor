@@ -2,12 +2,12 @@ package gotldextractor
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
-	_ "strconv"
 	"strings"
 )
 
@@ -68,7 +68,13 @@ type TLDExtractorNode struct {
 }
 
 func (tldextractor *TLDExtractor) Build() (bool, error) {
-	return tldextractor.BuildFromDataFile("dat/effective_tld_names.dat")
+	tldextractor.RootNode = &TLDExtractorNode{}
+	tldextractor.RootNode.Depth = 0
+	scanner := bufio.NewScanner(bytes.NewReader(effective_tld_names_dat()))
+	for scanner.Scan() {
+		tldextractor.AddTLD(scanner.Text())
+	}
+	return true, nil
 }
 
 func (tldextractor *TLDExtractor) BuildFromDataFile(path string) (bool, error) {

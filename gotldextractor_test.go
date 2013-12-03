@@ -13,6 +13,14 @@ func TestBuild(t *testing.T) {
 	}
 }
 
+func TestBuildFromDataFile(t *testing.T) {
+	tldextract := TLDExtractor{}
+	_, err := tldextract.BuildFromDataFile("dat/effective_tld_names.dat")
+	if err != nil {
+		t.Error("Error building tree! - ", err)
+	}
+}
+
 func TestFetchEffectiveTLDNames(t *testing.T) {
 	tldextract := TLDExtractor{}
 	_, err := tldextract.BuildFromURL("")
