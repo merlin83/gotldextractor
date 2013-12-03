@@ -253,8 +253,8 @@ func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 		//fmt.Println("INSIDE hasNot lastDot:", lastDot, " lastIsEnd:", lastIsEnd)
 		lastIsEnd = lastDot
 	}
-	tld := strings.Trim(use_host[lastIsEnd+1:], ".")
-	subdomain_domain := strings.Trim(use_host[0:lastIsEnd+1], ".")
+	tld := use_host[lastIsEnd+1:]
+	subdomain_domain := use_host[0:lastIsEnd]
 	domain_index := strings.LastIndex(subdomain_domain, ".")
 	subdomain, domain := "", ""
 	if domain_index == -1 {
