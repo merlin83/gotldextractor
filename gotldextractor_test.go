@@ -37,76 +37,34 @@ func printParseResult(r *TLDResult) {
 	fmt.Println("Parse result for ", r.GetHostname(), " subdomain: ", r.Subdomain, " domain: ", r.Domain, " tld: ", r.TLD, " rules: ", r.Rules)
 }
 
+func test_hostname(t *testing.T, tldextract TLDExtractor, hostname, check_subdomain, check_domain, check_tld string) {
+	r, err := tldextract.ParseHost(hostname)
+	if err != nil {
+		t.Error("test_hostname ParseHost (", hostname, ") error:", err)
+	}
+	if r.Subdomain != check_subdomain && r.Domain != check_domain && r.TLD != check_tld {
+		invalidParseResult(t, &r)
+	}
+	printParseResult(&r)
+}
+
 func TestParseHosts(t *testing.T) {
 	tldextract := TLDExtractor{}
 	_, err := tldextract.Build()
 	if err != nil {
 		t.Error("Error building tree! - ", err)
 	}
-	var r TLDResult
-	r, err = tldextract.ParseHost("meh.thisshouldwork.ck")
-	if r.Subdomain != "" && r.Domain != "meh" && r.TLD != "thisshouldwork.ck" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("meh.www.ck")
-	if r.Subdomain != "meh" && r.Domain != "www" && r.TLD != "ck" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.meh.ck")
-	if r.Subdomain != "" && r.Domain != "www" && r.TLD != "meh.ck" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.guy.kawasaki.jp")
-	if r.Subdomain != "" && r.Domain != "www" && r.TLD != "guy.kawasaki.jp" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.city.kawasaki.jp")
-	if r.Subdomain != "www" && r.Domain != "city" && r.TLD != "kawasaki.jp" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.cnn.com")
-	if r.Subdomain != "www" && r.Domain != "cnn" && r.TLD != "com" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.bbc.co.uk")
-	if r.Subdomain != "www" && r.Domain != "bbc" && r.TLD != "co.uk" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.sina.com.cn")
-	if r.Subdomain != "www" && r.Domain != "sina" && r.TLD != "com.cn" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("weibo.sina.com.cn:8080")
-	if r.Subdomain != "weibo" && r.Domain != "sina" && r.TLD != "com.cn" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("news.ycombinator.com")
-	if r.Subdomain != "news" && r.Domain != "ycombinator" && r.TLD != "com" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.github.com")
-	if r.Subdomain != "www" && r.Domain != "github" && r.TLD != "com" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.github.com:443")
-	if r.Subdomain != "www" && r.Domain != "github" && r.TLD != "com" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
-	r, err = tldextract.ParseHost("www.facebook.com:8080")
-	if r.Subdomain != "www" && r.Domain != "facebook" && r.TLD != "com" {
-		invalidParseResult(t, &r)
-	}
-	printParseResult(&r)
+	test_hostname(t, tldextract, "meh.thisshouldwork.ck", "", "meh", "thisshouldwork.ck")
+	test_hostname(t, tldextract, "meh.www.ck", "meh", "www", "ck")
+	test_hostname(t, tldextract, "www.meh.ck", "", "www", "meh.ck")
+	test_hostname(t, tldextract, "www.guy.kawasaki.jp", "", "www", "guy.kawasaki.jp")
+	test_hostname(t, tldextract, "www.city.kawasaki.jp", "www", "city", "kawasaki.jp")
+	test_hostname(t, tldextract, "www.cnn.com", "www", "cnn", "com")
+	test_hostname(t, tldextract, "www.bbc.co.uk", "www", "bbc", "co.uk")
+	test_hostname(t, tldextract, "www.sina.com.cn", "www", "sina", "com.cn")
+	test_hostname(t, tldextract, "weibo.sina.com.cn:8080", "weibo", "sina", "com.cn")
+	test_hostname(t, tldextract, "news.ycombinator.com", "news", "ycombinator", "com")
+	test_hostname(t, tldextract, "www.github.com", "www", "github", "com")
+	test_hostname(t, tldextract, "www.github.com:443", "www", "github", "com")
+	test_hostname(t, tldextract, "www.facebook.com:8080", "www", "facebook", "com")
 }
