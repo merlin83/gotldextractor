@@ -195,9 +195,13 @@ func (tldextractor *TLDExtractor) ParseURL(url *url.URL) (TLDResult, error) {
 func (tldextractor *TLDExtractor) ParseHost(host string) (TLDResult, error) {
 	//fmt.Println(host)
 	// we remove port information from the tld if it is present i.e. www.facebook.com:443
+	var err error
 	use_host := host
 	if strings.Contains(host, ":") {
-		use_host, _, _ = net.SplitHostPort(host)
+		use_host, _, err = net.SplitHostPort(host)
+		if err != nil {
+			return TLDResult{}, err
+		}
 	}
 	current_node := tldextractor.RootNode
 	lastIsEnd, lastDot := -1, -1
