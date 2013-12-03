@@ -46,6 +46,11 @@ func TestParseHosts(t *testing.T) {
 		invalidParseResult(t, &r)
 	}
 	printParseResult(&r)
+	r, err = tldextract.ParseHost("www.meh.ck")
+	if r.Subdomain != "" && r.Domain != "www" && r.TLD != "meh.ck" {
+		invalidParseResult(t, &r)
+	}
+	printParseResult(&r)
 	r, err = tldextract.ParseHost("www.guy.kawasaki.jp")
 	if r.Subdomain != "" && r.Domain != "www" && r.TLD != "guy.kawasaki.jp" {
 		invalidParseResult(t, &r)
